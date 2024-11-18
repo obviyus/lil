@@ -77,12 +77,15 @@ func main() {
 	// API routes
 	mux.HandleFunc("GET /api/v1", app.handleIndex)
 	mux.HandleFunc("GET /api/v1/health", app.handleHealthCheck)
-	mux.HandleFunc("POST /api/v1/shorten", app.handleShortenURL)
 	mux.HandleFunc("GET /api/v1/urls", app.handleGetURLs)
 	mux.HandleFunc("DELETE /api/v1/urls/{shortCode}", app.handleDeleteURL)
 	mux.HandleFunc("GET /metrics", func(w http.ResponseWriter, r *http.Request) {
 		metrics.WritePrometheus(w, true)
 	})
+
+	// Fetch the API key from config
+	apiKey := ko.MustString("app.api_key")
+	mux.Handle("POST /api/v1/shorten", middleware.APIKeyAuth(apiKey)(http.HandlerFunc(app.handleShortenURL)))
 
 	// Admin UI routes with basic auth
 	adminHandler := getAdminUI()
